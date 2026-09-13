@@ -1,0 +1,19 @@
+{
+  "description": "Grafo Git y blame con APIs nativas, sin dependencias de ejecución.",
+  "capabilities.untrustedWorkspaces.description": "La extensión ejecuta Git y requiere un workspace de confianza.",
+  "capabilities.virtualWorkspaces.description": "Requiere archivos locales en el host de la extensión y Git instalado.",
+  "contributes.commands.0.title": "InlineTraceLens: Abrir grafo Git",
+  "contributes.commands.1.title": "InlineTraceLens: Activar/desactivar blame",
+  "contributes.commands.2.title": "InlineTraceLens: Actualizar grafo y blame",
+  "contributes.configuration.properties.inlinetracelens.blame.enabled.description": "Mostrar autoría y hash con enlace solo en líneas con cursores, incluidos múltiples cursores.",
+  "contributes.configuration.properties.inlinetracelens.blame.maxFileBytes.description": "Límite de tamaño para calcular blame, en bytes.",
+  "contributes.configuration.properties.inlinetracelens.blame.messageLength.description": "Longitud máxima del mensaje en la anotación.",
+  "contributes.configuration.properties.inlinetracelens.graph.pageSize.description": "Commits cargados por página. Carga más para recorrer todo el historial.",
+  "contributes.configuration.properties.inlinetracelens.git.path.description": "Ejecutable Git en el host de la extensión.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.0": "Texto discreto con fondo transparente. Hash con enlace en el tooltip.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.1": "Hash con clic directo. El editor controla los colores y el fondo de los inlay hints.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.description": "Modo de visualización del blame.",
+  "contributes.configuration.properties.inlinetracelens.language.enumDescriptions.0": "Automático (idioma del editor)",
+  "contributes.configuration.properties.inlinetracelens.language.description": "Idioma del grafo y blame. Auto sigue al editor. Los comandos y las descripciones de configuración siguen el idioma del editor.",
+  "contributes.colors.0.description": "Color de las anotaciones de blame de InlineTraceLens."
+}

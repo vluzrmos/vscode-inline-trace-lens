@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="InlineTraceLens: a lens framing a Git branch">
+<rect x="8" y="8" width="496" height="496" rx="112" fill="#131922"/>
+<path d="M326 326L419 419" fill="none" stroke="#ac8df7" stroke-width="48" stroke-linecap="round"/>
+<circle cx="224" cy="224" r="137" fill="#1b2330" stroke="#65c8ed" stroke-width="30"/>
+<path d="M179 166V283M179 264C179 231 269 248 269 199" fill="none" stroke="#ac8df7" stroke-width="17" stroke-linecap="round"/>
+<circle cx="179" cy="166" r="21" fill="#65c8ed"/>
+<circle cx="179" cy="283" r="21" fill="#65c8ed"/>
+<circle cx="269" cy="199" r="21" fill="#ac8df7"/>
+</svg>

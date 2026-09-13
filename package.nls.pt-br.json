@@ -1,0 +1,19 @@
+{
+  "description": "Grafo Git e autoria por linha, com APIs nativas e sem dependências de execução.",
+  "capabilities.untrustedWorkspaces.description": "A extensão executa o Git do ambiente e requer um workspace confiável.",
+  "capabilities.virtualWorkspaces.description": "Requer arquivos locais no host da extensão e o Git instalado.",
+  "contributes.commands.0.title": "InlineTraceLens: Abrir grafo Git",
+  "contributes.commands.1.title": "InlineTraceLens: Ativar/desativar autoria por linha",
+  "contributes.commands.2.title": "InlineTraceLens: Atualizar grafo e blame",
+  "contributes.configuration.properties.inlinetracelens.blame.enabled.description": "Exibir autoria e hash clicável apenas nas linhas com cursores, incluindo múltiplos cursores.",
+  "contributes.configuration.properties.inlinetracelens.blame.maxFileBytes.description": "Limite de tamanho para calcular blame, em bytes.",
+  "contributes.configuration.properties.inlinetracelens.blame.messageLength.description": "Tamanho máximo da mensagem na anotação.",
+  "contributes.configuration.properties.inlinetracelens.graph.pageSize.description": "Commits carregados por página. Carregue mais para navegar todo o histórico.",
+  "contributes.configuration.properties.inlinetracelens.git.path.description": "Executável Git no host da extensão.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.0": "Texto discreto e transparente. Hash clicável no tooltip.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.1": "Hash com clique direto. Cores e fundo definidos pelo editor para inlay hints.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.description": "Forma de exibir o blame.",
+  "contributes.configuration.properties.inlinetracelens.language.enumDescriptions.0": "Automático (idioma do editor)",
+  "contributes.configuration.properties.inlinetracelens.language.description": "Idioma do grafo e blame. Auto segue o editor. Os comandos e descrições das configurações seguem o idioma do editor.",
+  "contributes.colors.0.description": "Cor das anotações de autoria do InlineTraceLens."
+}

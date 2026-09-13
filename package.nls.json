@@ -1,0 +1,19 @@
+{
+  "description": "Git graph and inline blame using native APIs, with no runtime dependencies.",
+  "capabilities.untrustedWorkspaces.description": "This extension runs Git and requires a trusted workspace.",
+  "capabilities.virtualWorkspaces.description": "Requires local files on the extension host and Git installed.",
+  "contributes.commands.0.title": "InlineTraceLens: Open Git graph",
+  "contributes.commands.1.title": "InlineTraceLens: Toggle inline blame",
+  "contributes.commands.2.title": "InlineTraceLens: Refresh graph and blame",
+  "contributes.configuration.properties.inlinetracelens.blame.enabled.description": "Show authorship and a clickable hash only on cursor lines, including multiple cursors.",
+  "contributes.configuration.properties.inlinetracelens.blame.maxFileBytes.description": "File size limit for blame, in bytes.",
+  "contributes.configuration.properties.inlinetracelens.blame.messageLength.description": "Maximum message length in the annotation.",
+  "contributes.configuration.properties.inlinetracelens.graph.pageSize.description": "Commits loaded per page. Load more to browse the full history.",
+  "contributes.configuration.properties.inlinetracelens.git.path.description": "Git executable on the extension host.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.0": "Subtle text with a transparent background. Clickable hash in the tooltip.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.enumDescriptions.1": "Directly clickable hash. Inlay hint colors and background are controlled by the editor.",
+  "contributes.configuration.properties.inlinetracelens.blame.displayMode.description": "Blame display mode.",
+  "contributes.configuration.properties.inlinetracelens.language.enumDescriptions.0": "Automatic (editor language)",
+  "contributes.configuration.properties.inlinetracelens.language.description": "Graph and blame language. Auto follows the editor. Command titles and setting descriptions always follow the editor language.",
+  "contributes.colors.0.description": "InlineTraceLens blame annotation color."
+}
