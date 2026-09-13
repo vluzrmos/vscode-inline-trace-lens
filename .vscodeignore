@@ -1,0 +1,12 @@
+# Only runtime files and public package documentation belong in the VSIX.
+**/*
+!package.json
+!package.nls*.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!src/**
+!media/graph.js
+!media/graph.css
+!media/i18n.js
+!media/icon.png

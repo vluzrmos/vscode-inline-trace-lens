@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="media/icon.png" width="112" height="112" alt="InlineTraceLens: lente com um caminho de commits">
+  <img src="https://raw.githubusercontent.com/vluzrmos/vscode-inline-trace-lens/main/media/icon.png" width="112" height="112" alt="InlineTraceLens: lente com um caminho de commits">
 </p>
 
 
@@ -7,19 +7,19 @@
 
 Exibe autoria e histórico de arquivos em linha, junto a um grafo do histórico Git.
 
-![Demonstração do grafo Git e do blame com múltiplos cursores](media/demo.gif)
+![Demonstração do grafo Git e do blame com múltiplos cursores](https://raw.githubusercontent.com/vluzrmos/vscode-inline-trace-lens/main/media/demo.gif)
 
-*Demonstração ilustrativa com dados fictícios. [Ver imagem estática](media/demo-preview.png).*
+*Demonstração ilustrativa com dados fictícios. [Ver imagem estática](https://raw.githubusercontent.com/vluzrmos/vscode-inline-trace-lens/main/media/demo-preview.png).*
 
 ## Instalar
 
 Requer **VS Code 1.85+**, VSCodium ou fork que implemente a API pública compatível, e **Git 2.30+** no host da extensão. Não depende do Marketplace da Microsoft nem da extensão Git integrada. Funciona no host de workspace de SSH, WSL e containers com Git instalado. Não funciona em ambientes exclusivamente web ou workspaces virtuais.
 
-1. Gere o pacote com `npm run package` (Node.js 18.17+; não precisa de `npm install`).
-2. No editor, execute **Extensions: Install from VSIX…** e selecione `dist/inlinetracelens-0.3.1.vsix`.
+1. Com Node.js 22 LTS atualizado ou mais recente, execute `npm ci --ignore-scripts` e depois `npm run package`.
+2. No editor, execute **Extensions: Install from VSIX…** e selecione `dist/vscode/inlinetracelens-0.3.1.vsix`.
 3. Abra uma pasta Git confiável. Execute **InlineTraceLens: Abrir grafo Git** na paleta ou use o ícone na barra do editor/SCM.
 
-Também é possível executar `code --install-extension dist/inlinetracelens-0.3.1.vsix` ou o equivalente `codium`. Para desenvolver, abra esta pasta no editor e pressione **F5**.
+Também é possível executar `code --install-extension dist/vscode/inlinetracelens-0.3.1.vsix` ou o equivalente `codium`. Para desenvolver, abra esta pasta no editor e pressione **F5**.
 
 ## Funcionalidades
 
@@ -55,15 +55,17 @@ O blame mantém cache limitado por documento/versão, invalida durante edições
 - `media/`: interface sem frameworks; dados Git inseridos com `textContent`, política CSP restritiva, sem scripts externos ou conexões de rede. Mensagens para abrir arquivos são verificadas contra os detalhes obtidos pelo host.
 - `src/extension.js`: composição e ciclo de vida. Para acrescentar uma funcionalidade, crie um módulo em `features`, injete os serviços necessários e registre seus comandos/disposable aqui e no manifesto.
 
-**Zero pacotes externos**, inclusive no build. Usa somente API pública estável do VS Code e bibliotecas padrão do Node. Sem telemetria, credenciais, fetch, hooks de escrita ou alterações no repositório. Requer confiança no workspace. O executável Git e o próprio editor devem ser mantidos atualizados pelo usuário. Nenhum software pode ser declarado livre de vulnerabilidades apenas pela ausência de dependências.
+**Zero dependências externas de execução.** Usa somente API pública estável do VS Code e bibliotecas padrão do Node. O empacotamento usa a ferramenta oficial `@vscode/vsce`, com versão fixada e dependências registradas em `package-lock.json`; essas ferramentas não são incluídas no VSIX. Sem telemetria, credenciais, fetch, hooks de escrita ou alterações no repositório. Requer confiança no workspace. O executável Git e o próprio editor devem ser mantidos atualizados pelo usuário. Nenhum software pode ser declarado livre de vulnerabilidades apenas pela ausência de dependências.
 
 Históricos muito grandes podem exceder os limites de tempo/saída ao calcular ancestralidade; nesse caso é exibido um erro, sem truncamento silencioso. Páginas carregadas permanecem na webview, portanto percorrer um histórico inteiro muito grande aumenta o uso de memória. O suporte a forks decorre do contrato da API, não de testes em todos os editores.
 
 ## Verificação
 
 ```sh
+npm ci --ignore-scripts
 npm run check
 npm test
+npm run package:files
 npm run package
 ```
 
@@ -90,3 +92,7 @@ Os títulos dos comandos e as descrições das configurações usam a localizaç
 ## Recursos visuais
 
 Ícone original em `media/icon.svg` (vetor editável) e `media/icon.png` (512 × 512). Animação ilustrativa em `media/demo.gif`, com alternativa estática em `media/demo-preview.png`. Para regenerar somente os recursos visuais, execute `python scripts/generate-media.py` com Pillow instalado. Essa ferramenta opcional não é necessária para executar ou empacotar a extensão.
+
+## Empacotamento para publicação
+
+`npm run package` gera o VSIX pelo empacotador oficial em `dist/vscode/`, para o Marketplace da Microsoft, e uma cópia idêntica em `dist/vsx/`, para o Open VSX. As duas lojas usam o mesmo formato VSIX. A lista permitida em `.vscodeignore` inclui somente código de execução, traduções, ícone e documentação. Testes, ferramentas, previews e dependências de desenvolvimento ficam fora do pacote. O README carrega a demonstração por HTTPS do repositório público. Os comandos de verificação e empacotamento não publicam a extensão.

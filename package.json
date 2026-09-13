@@ -147,7 +147,19 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "check": "node scripts/check.js",
-    "package": "node scripts/package.js"
+    "package": "node scripts/package.js",
+    "package:files": "vsce ls --no-dependencies"
   },
-  "icon": "media/icon.png"
+  "icon": "media/icon.png",
+  "devDependencies": {
+    "@vscode/vsce": "3.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vluzrmos/vscode-inline-trace-lens.git"
+  },
+  "homepage": "https://github.com/vluzrmos/vscode-inline-trace-lens#readme",
+  "bugs": {
+    "url": "https://github.com/vluzrmos/vscode-inline-trace-lens/issues"
+  }
 }
