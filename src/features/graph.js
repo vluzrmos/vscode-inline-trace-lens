@@ -3,6 +3,7 @@ const { t, getLanguage } = require('../core/i18n');
 
 const vscode = require('vscode');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const path = require('node:path');
 const { layout } = require('../core/lanes');
 const { assertHash } = require('../core/git');
@@ -51,10 +52,32 @@ class GraphFeature {
         if (!message || typeof message !== 'object') return;
         if (message.type === 'ready' || message.type === 'refresh') await this.load(state, true);
         else if (message.type === 'more') await this.load(state, false);
-        else if (message.type === 'details' && state.loaded.has(message.hash)) await this.sendDetails(state, message.hash);
-        else if (message.type === 'file') {
+        else if (message.type === 'details') {
+          assertHash(message.hash);
+          await this.sendDetails(state, message.hash);
+        }
+        else if (message.type === 'file' || message.type === 'openDiff') {
           const details = state.details.get(message.hash);
           if (details && Number.isInteger(message.index) && details.files[message.index]) await this.openDiff(state.root, details, details.files[message.index]);
+        }
+        else if (message.type === 'openFile') {
+          const details = state.details.get(message.hash);
+          if (details && Number.isInteger(message.index) && details.files[message.index]) await this.openFile(state.root, details, details.files[message.index]);
+        }
+        else if (message.type === 'copyPath') {
+          const details = state.details.get(message.hash);
+          if (details && Number.isInteger(message.index) && details.files[message.index]) {
+            const fullPath = path.join(state.root, details.files[message.index].path);
+            await vscode.env.clipboard.writeText(fullPath);
+            void vscode.window.setStatusBarMessage(t("Caminho copiado para a área de transferência."), 3000);
+          }
+        }
+        else if (message.type === 'copyRelative') {
+          const details = state.details.get(message.hash);
+          if (details && Number.isInteger(message.index) && details.files[message.index]) {
+            await vscode.env.clipboard.writeText(details.files[message.index].path);
+            void vscode.window.setStatusBarMessage(t("Caminho copiado para a área de transferência."), 3000);
+          }
         }
       } catch (error) {
         this.output.appendLine(error.stack || error.message);
@@ -70,7 +93,7 @@ class GraphFeature {
     try {
       if (reset || !state.snapshot) {
         state.snapshot = await this.git.snapshot(state.root);
-        state.rows = []; state.lanes = []; state.loaded.clear(); state.details.clear();
+        state.rows = []; state.lanes = []; state.loaded.clear();
       }
       const count = vscode.workspace.getConfiguration('inlinetracelens').get('graph.pageSize', 200);
       const commits = await this.git.log(state.root, state.rows.length, count + 1, state.snapshot);
@@ -87,8 +110,11 @@ class GraphFeature {
   }
 
   async sendDetails(state, hash) {
-    const details = await this.git.details(state.root, hash);
-    state.details.set(hash, details);
+    let details = state.details.get(hash);
+    if (!details) {
+      details = await this.git.details(state.root, hash);
+      state.details.set(hash, details);
+    }
     await state.panel.webview.postMessage({ type: 'details', ...details });
   }
 
@@ -109,6 +135,28 @@ class GraphFeature {
     const left = makeUri(details.parent || 'empty', file.oldPath, before);
     const right = makeUri(details.hash, file.path, after);
     await vscode.commands.executeCommand('vscode.diff', left, right, `${file.path} (${details.hash.slice(0, 8)})`, { preview: true });
+  }
+
+  async openFile(root, details, file) {
+    const fullPath = path.join(root, file.path);
+    if (fs.existsSync(fullPath)) {
+      const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(fullPath));
+      await vscode.window.showTextDocument(doc, { preview: true });
+    } else {
+      const content = file.status[0] !== 'D' ? await this.git.content(root, details.hash, file.path) : (details.parent ? await this.git.content(root, details.parent, file.oldPath) : '');
+      if (content.includes('\0')) {
+        void vscode.window.showInformationMessage(t("Arquivo binário: diff textual indisponível."));
+        return;
+      }
+      const uri = vscode.Uri.from({
+        scheme: 'inlinetracelens',
+        path: '/' + file.path,
+        query: new URLSearchParams({ root, revision: file.status[0] !== 'D' ? details.hash : (details.parent || 'empty') }).toString()
+      });
+      this.documents.set(uri.toString(), content);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc, { preview: true });
+    }
   }
 
   refresh() {

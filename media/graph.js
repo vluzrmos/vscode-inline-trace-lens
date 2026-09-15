@@ -4,8 +4,12 @@
   const language = document.documentElement.lang;
   const t = InlineTraceLensI18n.create(language);
   const $ = id => document.getElementById(id);
-  let rows = []; let more = false; let selected;
-  const detailCache = new Map(); const expanded = new Set();
+  const savedState = (typeof vscode?.getState === 'function' ? vscode.getState() : undefined) || {};
+  let rows = []; let more = false;
+  let selected = savedState.selected;
+  const detailCache = new Map(Array.isArray(savedState.detailCache) ? savedState.detailCache : []);
+  const expanded = new Set(Array.isArray(savedState.expanded) ? savedState.expanded : []);
+  let restoredScroll = false;
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -14,6 +18,19 @@
   };
   const request = (type, fields = {}) => vscode.postMessage({ type, ...fields });
   const busy = value => { $('refresh').disabled = value; $('more').disabled = value; };
+  function saveState() {
+    if (typeof vscode?.setState !== 'function') return;
+    const tableScroll = document.querySelector('.table-scroll');
+    vscode.setState({
+      selected,
+      expanded: [...expanded],
+      detailCache: [...detailCache.entries()].slice(-100),
+      query: $('search')?.value || '',
+      scrollY: window.scrollY || document.documentElement.scrollTop || 0,
+      tableScrollLeft: tableScroll ? tableScroll.scrollLeft : 0,
+      tableScrollTop: tableScroll ? tableScroll.scrollTop : 0
+    });
+  }
   function filesView(details) {
     const container = element('div', undefined, 'details');
     const heading = element('div', undefined, 'detail-heading');
@@ -22,11 +39,87 @@
     if (details.parents.length > 1) container.append(element('p', t("Merge · comparação com o primeiro pai"), 'muted'));
     container.append(element('div', t('{count} arquivos alterados', { count: details.files.length }), 'files-heading'));
     details.files.forEach((file, index) => {
-      const button = element('button', undefined, 'file');
-      button.append(element('span', file.status, `file-status status-${file.status[0]}`),
-        element('span', file.oldPath !== file.path ? `${file.oldPath} → ${file.path}` : file.path), element('span', t("Abrir diff ↗"), 'file-action'));
-      button.onclick = () => request('file', { hash: details.hash, index });
-      container.append(button);
+      const row = element('div', undefined, 'file-item');
+      const info = element('button', undefined, 'file-info');
+      info.title = t("Abrir diff");
+      info.append(
+        element('span', file.status, `file-status status-${file.status[0]}`),
+        element('span', file.oldPath !== file.path ? `${file.oldPath} → ${file.path}` : file.path, 'file-path')
+      );
+      info.onclick = () => request('file', { hash: details.hash, index });
+
+      const dropdown = element('div', undefined, 'file-dropdown');
+      const menuBtn = element('button', '⋮', 'file-menu-btn');
+      menuBtn.title = t("Ações");
+      menuBtn.setAttribute('aria-label', t("Ações"));
+      menuBtn.setAttribute('aria-haspopup', 'true');
+      menuBtn.setAttribute('aria-expanded', 'false');
+
+      const menu = element('div', undefined, 'file-menu');
+      menu.hidden = true;
+
+      const closeMenu = () => {
+        menu.hidden = true;
+        menuBtn.setAttribute('aria-expanded', 'false');
+      };
+
+      const openFileBtn = element('button', t("Abrir arquivo"), 'file-menu-item');
+      openFileBtn.onclick = e => {
+        e.stopPropagation();
+        closeMenu();
+        request('openFile', { hash: details.hash, index });
+      };
+
+      const openDiffBtn = element('button', t("Abrir diff"), 'file-menu-item');
+      openDiffBtn.onclick = e => {
+        e.stopPropagation();
+        closeMenu();
+        request('file', { hash: details.hash, index });
+      };
+
+      const copyPathBtn = element('button', t("Copiar caminho"), 'file-menu-item');
+      copyPathBtn.onclick = e => {
+        e.stopPropagation();
+        request('copyPath', { hash: details.hash, index });
+        copyPathBtn.textContent = `✓ ${t("Copiado!")}`;
+        copyPathBtn.classList.add('copied');
+        setTimeout(() => {
+          copyPathBtn.textContent = t("Copiar caminho");
+          copyPathBtn.classList.remove('copied');
+          closeMenu();
+        }, 500);
+      };
+
+      const copyRelBtn = element('button', t("Copiar caminho relativo"), 'file-menu-item');
+      copyRelBtn.onclick = e => {
+        e.stopPropagation();
+        request('copyRelative', { hash: details.hash, index });
+        copyRelBtn.textContent = `✓ ${t("Copiado!")}`;
+        copyRelBtn.classList.add('copied');
+        setTimeout(() => {
+          copyRelBtn.textContent = t("Copiar caminho relativo");
+          copyRelBtn.classList.remove('copied');
+          closeMenu();
+        }, 500);
+      };
+
+      menuBtn.onclick = e => {
+        e.stopPropagation();
+        const isOpen = !menu.hidden;
+        document.querySelectorAll('.file-menu').forEach(m => {
+          m.hidden = true;
+          m.previousElementSibling?.setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          menu.hidden = false;
+          menuBtn.setAttribute('aria-expanded', 'true');
+        }
+      };
+
+      menu.append(openFileBtn, openDiffBtn, copyPathBtn, copyRelBtn);
+      dropdown.append(menuBtn, menu);
+      row.append(info, dropdown);
+      container.append(row);
     });
     return container;
   }
@@ -71,6 +164,7 @@
     selected = hash;
     if (expanded.has(hash)) expanded.delete(hash);
     else { expanded.add(hash); if (!detailCache.has(hash)) request('details', { hash }); }
+    saveState();
     render();
   }
   function render() {
@@ -125,25 +219,68 @@
   }
   $('refresh').onclick = () => { busy(true); $('status').textContent = t("Atualizando…"); request('refresh'); };
   $('more').onclick = () => { busy(true); $('status').textContent = t("Carregando…"); request('more'); };
-  $('search').oninput = render;
+  $('search').oninput = () => { saveState(); render(); };
+  if (savedState.query && $('search')) $('search').value = savedState.query;
   document.addEventListener('keydown', event => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); $('search').focus(); }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r') { event.preventDefault(); $('refresh').click(); }
-    if (event.key === 'Escape') { expanded.clear(); $('focus').replaceChildren(); render(); }
+    if (event.key === 'Escape') {
+      const openMenus = document.querySelectorAll('.file-menu:not([hidden])');
+      if (openMenus.length) {
+        openMenus.forEach(m => {
+          m.hidden = true;
+          m.previousElementSibling?.setAttribute('aria-expanded', 'false');
+        });
+        return;
+      }
+      expanded.clear(); $('focus').replaceChildren(); saveState(); render();
+    }
   });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.file-menu:not([hidden])').forEach(m => {
+      m.hidden = true;
+      m.previousElementSibling?.setAttribute('aria-expanded', 'false');
+    });
+  });
+  let scrollDebounce;
+  const onScroll = () => {
+    clearTimeout(scrollDebounce);
+    scrollDebounce = setTimeout(saveState, 200);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  document.querySelector('.table-scroll')?.addEventListener('scroll', onScroll, { passive: true });
+
   window.addEventListener('message', event => {
     const message = event.data;
     if (message.type === 'commits') {
-      if (message.reset) { rows = []; expanded.clear(); detailCache.clear(); $('focus').replaceChildren(); }
+      if (message.reset) { rows = []; $('focus').replaceChildren(); }
       rows.push(...message.rows); more = message.more;
       const repo = message.root.split(/[\\/]/).pop();
       $('repository').textContent = `${repo}   /   ${message.branch}`; $('repository').title = message.root;
       $('status').textContent = rows.length ? '' : t("Este repositório ainda não tem commits.");
-      busy(false); render();
+      busy(false);
+      for (const hash of expanded) {
+        if (rows.some(r => r.hash === hash) && !detailCache.has(hash)) {
+          request('details', { hash });
+        }
+      }
+      saveState();
+      render();
+      if (!restoredScroll) {
+        restoredScroll = true;
+        if (savedState.scrollY) window.scrollTo(0, savedState.scrollY);
+        const tableScroll = document.querySelector('.table-scroll');
+        if (tableScroll) {
+          if (savedState.tableScrollLeft) tableScroll.scrollLeft = savedState.tableScrollLeft;
+          if (savedState.tableScrollTop) tableScroll.scrollTop = savedState.tableScrollTop;
+        }
+      }
     } else if (message.type === 'details') {
       detailCache.set(message.hash, message);
-      if (rows.some(row => row.hash === message.hash)) { expanded.add(message.hash); selected = message.hash; render(); }
+      if (rows.some(row => row.hash === message.hash)) { expanded.add(message.hash); selected = message.hash; }
       else $('focus').replaceChildren(element('h2', `Commit ${message.hash.slice(0, 8)}`), filesView(message));
+      saveState();
+      render();
     } else if (message.type === 'error') { $('status').textContent = message.message; busy(false); }
   });
   request('ready');

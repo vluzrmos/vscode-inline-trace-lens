@@ -8,17 +8,18 @@ const root = path.resolve(__dirname, '..');
 
 async function packageExtension() {
   const filename = `${pkg.name}-${pkg.version}.vsix`;
-  const path = path.join(root, 'dist',  filename);
+  const targetPath = path.join(root, 'dist', filename);
   
-  fs.mkdirSync(path.dirname(path), { recursive: true });
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
   await createVSIX({
     cwd: root,
-    packagePath: path,
+    packagePath: targetPath,
     githubBranch: 'main',
     dependencies: false,
     useYarn: false
   });
+  console.log(targetPath);
 }
 
 packageExtension().catch(error => {
