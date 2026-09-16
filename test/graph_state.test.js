@@ -247,3 +247,51 @@ test('Webview do Grafo: restaura e persiste commits expandidos, busca e detalhes
   copyRelButton.click();
   assert.ok(postedMessages.some(m => m.type === 'copyRelative' && m.hash === hashB && m.index === 0));
 });
+
+test('GraphFeature define iconPath ao abrir o webview panel', async () => {
+  const filename = path.resolve(__dirname, '../src/features/graph.js');
+  let createdPanel;
+  const mockVscode = {
+    workspace: {
+      isTrusted: true,
+      registerTextDocumentContentProvider: () => ({ dispose: () => {} })
+    },
+    window: {
+      createWebviewPanel: (viewType, title, column, options) => {
+        createdPanel = {
+          viewType,
+          title,
+          options,
+          webview: { onDidReceiveMessage: () => {}, html: '', asWebviewUri: u => u, cspSource: 'https://test.invalid' },
+          onDidDispose: () => {}
+        };
+        return createdPanel;
+      }
+    },
+    ViewColumn: { Active: 1 },
+    Uri: {
+      joinPath: (base, ...segments) => ({ path: `${base?.path || ''}/${segments.join('/')}` })
+    }
+  };
+
+  const contextModule = { exports: {} };
+  const localRequire = createRequire(filename);
+  vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
+    module: contextModule,
+    exports: contextModule.exports,
+    require: name => name === 'vscode' ? mockVscode : localRequire(name),
+    __dirname: path.dirname(filename),
+    process
+  });
+
+  const { GraphFeature } = contextModule.exports;
+  const mockContext = { extensionUri: { path: '/ext' } };
+  const mockGit = { root: async () => '/repo' };
+  const mockOutput = { appendLine: () => {} };
+  const graph = new GraphFeature(mockContext, mockGit, mockOutput);
+  await graph.open('/repo');
+
+  assert.ok(createdPanel, 'Painel deve ter sido criado');
+  assert.equal(createdPanel.iconPath.path, '/ext/media/icon.png');
+});
+

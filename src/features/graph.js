@@ -44,6 +44,7 @@ class GraphFeature {
     }
     const panel = vscode.window.createWebviewPanel('inlinetracelens', `InlineTraceLens • ${path.basename(root)}`, vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')] });
+    panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'icon.png');
     state = { panel, root, rows: [], lanes: [], loaded: new Set(), details: new Map(), busy: false, focusHash };
     this.panels.set(root, state);
     panel.onDidDispose(() => this.panels.delete(root));
